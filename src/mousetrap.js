@@ -908,4 +908,8 @@
     if (typeof define === 'function' && define.amd) {
         define(Mousetrap);
     }
+    // browserify support
+    if(typeof module === 'object' && module.exports) {
+        module.exports = Mousetrap;
+    }
 }) ();
