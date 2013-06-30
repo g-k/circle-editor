@@ -1,0 +1,19 @@
+{
+  "name": "circle-editor",
+  "version": "0.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "BSD",
+  "devDependencies": {
+    "nodemon": "~0.7.8",
+    "coffeeify": "~0.5.1",
+    "browserify": "~2.22.0"
+  },
+  "dependencies": {
+    "d3": "~3.2.2"
+  }
+}
