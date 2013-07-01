@@ -1,30 +1,40 @@
 d3 = require 'd3'
 Mousetrap = require './mousetrap.js'
 
+pow = Math.pow
+cos = Math.cos
+sin = Math.sin
+
 
 measureDistance = (point1, point2) ->
   # point to point line distance for two objects with x and y
   # attributes
-  pow = Math.pow
   r2 = pow(point1.x - point2.x, 2) + pow(point1.y - point2.y, 2)
-  return pow(r2, 0.5)
+  return pow r2, 0.5
 
 
 svg = d3.select('body')
   .append('svg')
-    .attr('height', document.height)  # TODO: handle window resize?
+    .attr('height', document.height)
     .attr('width', document.width)
 
 
 circles = []  # any circles to draw go here
+connections = [] # connections between circle orbiters as refs to circles
+# expect a sparse graph since people should be too lazy to connect all
+# the circles to each other
+
+redo = [] # stack of circles to redo if new circles aren't drawn
 
 # saved circles
 circles_group = svg.append('g')
   .attr('class', 'circles')
 
+connections_group = svg.append('g')
+  .attr('class', 'connections')
+
 
 # initialize circle candidate (might be better to do this with canvas)
-# (todo: look up name for these UI things candidate is terrible)
 candidate_group = svg.append('g')
   .attr('class', 'candidate')
   .attr('display', 'none') # hide until click
@@ -72,10 +82,16 @@ svg.on 'mousemove', ->
 svg.on 'mouseup', ->
   # Add to drawn circles and draw it
   [x, y] = d3.mouse this
-  circle_candidate.r = measureDistance circle_candidate, {x: x, y: y}
+  # Set to 1 to avoid NaN cx and cy after dividing by zero
+  circle_candidate.r = measureDistance(circle_candidate, {x: x, y: y}) or 1
 
   circles.push circle_candidate
-  draw_circles()
+  redo.length = 0  # can't redo after creating new stuff
+
+  # Automatically connect the two most recent circles
+  # (need to be able to redo)
+  if circles.length > 1
+    connections.push [circles[circles.length-2], circles[circles.length-1]]
 
   # hide candidate
   candidate_group.attr('display', 'none')
@@ -85,20 +101,33 @@ svg.on 'mouseup', ->
   circle_candidate = null
 
 # undo with ctrl+z (or cmd+z for osx)
-# d3 key events?
 Mousetrap.bind 'mod+z', ->
-  circles.pop()
-  draw_circles()
+  redo_circle = circles.pop()
+  if redo_circle
+    redo.push redo_circle
+
+Mousetrap.bind 'shift+mod+z', ->
+  circle = redo.pop()
+  if circle != undefined
+    circles.push circle
 
 
-draw_circles = ->
-  console.log 'circles', circles
+window.pause = false
+Mousetrap.bind 'space', (event) ->
+  event.preventDefault() # don't scroll
+  window.pause = not window.pause
+
+# connect lines from circles in order drawn (keep it simple
+update = (t) ->
+  # console.log 'circles', circles
 
   selection = circles_group.selectAll('g')
     .data(circles)
 
-  g = selection
-      .enter()
+  selection.exit()
+    .remove()
+
+  g = selection.enter()
         .append('g')
           .attr('transform', (d) -> "translate(#{d.x},#{d.y})")
 
@@ -110,36 +139,66 @@ draw_circles = ->
     .attr('stroke', 'black')
     .attr('stroke-witdh', 1)
 
-  # Start the bead at a random angle around the circle (show candidate
-  # there too? start from mouse dragend position instead?)  for all
-  # entering circles (should be one)
-  cos = Math.cos
-  sin = Math.sin
-  angle = Math.random() * Math.PI * 2
-
   g.append('circle')
-    .attr('cx', (d) -> cos(angle) * d.r )
-    .attr('cy', (d) -> sin(angle) * d.r )
+    .attr('class', 'orbiter')
+    .attr('cx', 0)
+    .attr('cy', 0)
     .attr('r', 3)
     .attr('fill', "black")
     .attr('stroke', 'black')
     .attr('stroke-witdh', 1)
-    # use d3.timer and update / animation loop instead
-    .transition()
-      .duration(2000)  # try bumping really high
-        .ease('linear')
-        # non-constant angular velocity (smaller is slower)
-        # choppy for large circles?
-        .attrTween('cx', (d) ->
-          # d3.ease 'circle' ?
-          return (t) -> cos(t * Math.PI * 2) * d.r
-        )
-        .attrTween('cy', (d) ->
-          return (t) -> sin(t * Math.PI * 2) * d.r
-        )
 
-  selection
-    .exit().remove()
+  speed = 100
+
+  selection.select('.orbiter')
+    .attr('cx', (d) -> cos(speed / d.r * t) * d.r )
+    .attr('cy', (d) -> sin(speed / d.r * t) * d.r )
+
+  line = d3.svg.line()
+
+  locate_orbiter = (circle) ->
+    # for a circle return its orbiter location
+    # floor to make debugging easier
+    return [
+      (circle.x + cos(speed / circle.r * t) * circle.r) | 0,
+      (circle.y + sin(speed / circle.r * t) * circle.r) | 0
+    ]
+
+  orbit_line = (d) ->
+    locs = d.map locate_orbiter
+    # window.pause = true
+    return line locs
+
+  # draw a path from each orbiter back to beginning
+  paths = connections_group.selectAll('path')
+    .data(connections)
+      .attr('d', orbit_line)
+
+  paths.enter()
+    .append('path')
+      .attr('stroke', 'black')
+      .attr('shape-rendering', 'optimizeSpeed')  # https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/shape-rendering
+      .attr('d', orbit_line)
+
+  paths.exit().remove()
 
 
+last = 0
+d3.timer (elapsed) ->
+  if window.pause
+    seconds = last
+    return false  # keep going
+
+  seconds = (elapsed / 1000)
+
+  update seconds
+
+  last = seconds
+  return false  # keep going
+
+update last
+
+# expose for debugging
 window.d3 = d3
+window.circles = circles
+window.connections = connections
