@@ -19,7 +19,7 @@ circle_candidate = null  # data about a circle candidate if dragged out
 
 speed = 100  # linear velocity of particles in orbits
 dispatcher = d3.dispatch "pause", "unpause" # notify render loop to pause/unpause animation
-seconds = 0 # elapsed time
+seconds = 0 # elapsed time paused and unpaused
 paused = false # paused or not
 window.pauses = pauses = []  # lists of pause start and end global times
 
@@ -138,21 +138,21 @@ svg.on 'mouseup', ->
 
 # undo with ctrl+z (or cmd+z for osx)
 Mousetrap.bind 'mod+z', ->
-  redo_item = added.pop()
-  console.log redo_item
+  item = added.pop()
+  console.log 'undo:', item
 
-  if redo_item != undefined
-    redo.push redo_item
+  if item != undefined
+    redo.push item
 
-    if redo_item.type == 'circle'
+    if item.type == 'circle'
       circles.pop()
-    else if redo_item.type == 'connection'
+    else if item.type == 'connection'
       connections.pop()
 
 
 Mousetrap.bind 'shift+mod+z', ->
   item = redo.pop()
-  console.log item
+  console.log 'redo:', item
 
   if item != undefined
     added.push item
@@ -240,13 +240,13 @@ update = (t) ->
 ## Always be animating to provide feedback
 
 dispatcher.on "pause", (seconds) ->
-  console.log 'pause start'
+  console.log 'pause start', seconds
   pauses.push [seconds] # push pause start
 
   # start a timer to measure pause duration
   d3.timer (pause_elapsed) ->
     dispatcher.on "unpause", (seconds) ->
-      console.log 'pause end'
+      console.log 'pause end', seconds
       pauses[pauses.length-1].push seconds # add pause end
 
     if paused
