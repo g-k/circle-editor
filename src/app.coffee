@@ -6,25 +6,55 @@ cos = Math.cos
 sin = Math.sin
 
 
+circles = []  # any circles to draw go here
+connections = [] # connections between circle orbiters as refs to circles
+# expect a sparse graph since people should be too lazy to connect all
+# the circles to each other
+
+added = [] # stack of circles or connections added
+redo = [] # stack of things to read if new circles or connections aren't drawn
+
+
+circle_candidate = null  # data about a circle candidate if dragged out
+
+speed = 100  # linear velocity of particles in orbits
+window.pause = false  # pause animation?
+
+# expose vars for debugging
+window.d3 = d3
+window.circles = circles
+window.connections = connections
+
+
+## Random utility functions
+
 measureDistance = (point1, point2) ->
   # point to point line distance for two objects with x and y
   # attributes
   r2 = pow(point1.x - point2.x, 2) + pow(point1.y - point2.y, 2)
   return pow r2, 0.5
 
+line = d3.svg.line()
+
+
+## Initialize svg element, base groups, and hidden candidate circle for new circles
 
 svg = d3.select('body')
   .append('svg')
-    .attr('height', document.height)
-    .attr('width', document.width)
+    .style('position', 'absolute')
+    .style('top', 0)
+    .style('left', 0)
+# everything except IE8: http://compatibility.shwups-cms.ch/de/home/?search=innerWidth
+    .attr('height', window.innerHeight)
+    .attr('width', window.innerWidth)
+# http://stackoverflow.com/questions/9400615/whats-the-best-way-to-make-a-d3-js-visualisation-layout-responsive
+    .attr('viewBox', "500 500 #{window.innerWidth} #{window.innerHeight}")
+    .attr('preserveAspectRatio', 'xMinYMin')
 
+d3.select(window).on 'resize', ->
+  svg.attr('height', window.innerHeight)
+     .attr('width', window.innerWidth)
 
-circles = []  # any circles to draw go here
-connections = [] # connections between circle orbiters as refs to circles
-# expect a sparse graph since people should be too lazy to connect all
-# the circles to each other
-
-redo = [] # stack of circles to redo if new circles aren't drawn
 
 # saved circles
 circles_group = svg.append('g')
@@ -32,7 +62,6 @@ circles_group = svg.append('g')
 
 connections_group = svg.append('g')
   .attr('class', 'connections')
-
 
 # initialize circle candidate (might be better to do this with canvas)
 candidate_group = svg.append('g')
@@ -56,8 +85,7 @@ candidate_edge = candidate_group.append('circle')
   .attr('display', 'none') # hide until drag
 
 
-# data about a circle candidate if dragged out
-circle_candidate = null
+## Drawing circles
 
 svg.on 'mousedown', ->
   [x, y] = d3.mouse this  # get position in svg
@@ -78,7 +106,6 @@ svg.on 'mousemove', ->
     .attr('r', r)
     .attr('display', '')
 
-
 svg.on 'mouseup', ->
   # Add to drawn circles and draw it
   [x, y] = d3.mouse this
@@ -86,12 +113,15 @@ svg.on 'mouseup', ->
   circle_candidate.r = measureDistance(circle_candidate, {x: x, y: y}) or 1
 
   circles.push circle_candidate
+  added.push {type: 'circle', value: circle_candidate}
   redo.length = 0  # can't redo after creating new stuff
 
   # Automatically connect the two most recent circles
   # (need to be able to redo)
   if circles.length > 1
-    connections.push [circles[circles.length-2], circles[circles.length-1]]
+    new_connection = [circles[circles.length-2], circles[circles.length-1]]
+    connections.push new_connection
+    added.push {type: 'connection', value: new_connection}
 
   # hide candidate
   candidate_group.attr('display', 'none')
@@ -100,22 +130,42 @@ svg.on 'mouseup', ->
   # clear for next mouse event
   circle_candidate = null
 
+
+## Keybindings
+
 # undo with ctrl+z (or cmd+z for osx)
 Mousetrap.bind 'mod+z', ->
-  redo_circle = circles.pop()
-  if redo_circle
-    redo.push redo_circle
+  redo_item = added.pop()
+  console.log redo_item
+
+  if redo_item != undefined
+    redo.push redo_item
+
+    if redo_item.type == 'circle'
+      circles.pop()
+    else if redo_item.type == 'connection'
+      connections.pop()
+
 
 Mousetrap.bind 'shift+mod+z', ->
-  circle = redo.pop()
-  if circle != undefined
-    circles.push circle
+  item = redo.pop()
+  console.log item
+
+  if item != undefined
+    added.push item
+
+    if item.type == 'circle'
+      circles.push item.value
+    else if item.type == 'connection'
+      connections.push item.value
 
 
-window.pause = false
 Mousetrap.bind 'space', (event) ->
   event.preventDefault() # don't scroll
   window.pause = not window.pause
+
+
+## Update/render loop
 
 # connect lines from circles in order drawn (keep it simple
 update = (t) ->
@@ -148,13 +198,9 @@ update = (t) ->
     .attr('stroke', 'black')
     .attr('stroke-witdh', 1)
 
-  speed = 100
-
   selection.select('.orbiter')
     .attr('cx', (d) -> cos(speed / d.r * t) * d.r )
     .attr('cy', (d) -> sin(speed / d.r * t) * d.r )
-
-  line = d3.svg.line()
 
   locate_orbiter = (circle) ->
     # for a circle return its orbiter location
@@ -166,7 +212,6 @@ update = (t) ->
 
   orbit_line = (d) ->
     locs = d.map locate_orbiter
-    # window.pause = true
     return line locs
 
   # draw a path from each orbiter back to beginning
@@ -183,22 +228,42 @@ update = (t) ->
   paths.exit().remove()
 
 
-last = 0
-d3.timer (elapsed) ->
-  if window.pause
-    seconds = last
-    return false  # keep going
+## Always be animating to provide feedback
 
-  seconds = (elapsed / 1000)
+
+pause_start = null  # time of pause start
+pause_elapsed = 0
+
+d3.timer (elapsed) ->
+  seconds = (elapsed / 1000) # ms -> s
+
+  # grows while paused resulting in jump
+  # console.log 'pause time diff', seconds - pause_start
+
+  if window.pause and pause_start == null
+    console.log 'pause start!!'
+    pause_start = seconds - pause_elapsed
+
+  if window.pause and pause_start
+    # console.log 'still paused'
+    seconds = pause_start  # clobber seconds
+
+  if not window.pause and pause_start != null
+    console.log 'pause end!!'
+    pause_elapsed += (seconds - pause_start)
+    pause_start = null
+
+  if not window.pause and not pause_start
+    # console.log 'still running'
+    seconds -= pause_elapsed
 
   update seconds
 
-  last = seconds
   return false  # keep going
 
-update last
 
-# expose for debugging
-window.d3 = d3
-window.circles = circles
-window.connections = connections
+d3.timer (pause_elapsed) ->
+
+
+
+update 0  # Run
