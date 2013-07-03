@@ -3,8 +3,31 @@
   <head>
     <title>Tabled</title>
     <link rel="stylesheet" href="pure-min.css">
+    <style>
+      #menu {
+        background: white;
+        z-index: 10;
+        position: fixed;
+        bottom: 0px;
+        left: 0px;
+        opacity: 0.9;
+      }
+    </style>
   </head>
   <body>
+    <div class="pure-u" id="menu">
+      <div class="pure-menu pure-menu-open">
+	<div class="pure-menu-heading">
+	  Controls
+	</div>
+	<ul>
+	  <li><a>click and drag to draw
+	  <li><a>space to pause or unpause
+	  <li><a>ctrl+z to undo
+	  <li><a>shift+ctrl+z to redo
+	</ul>
+      </div>
+    </div>
 
     <script src="app.js" charset="utf-8"></script>
   </body>
