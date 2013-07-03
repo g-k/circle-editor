@@ -19,9 +19,10 @@ TODO:
 * allow arbitrary orbits (use svg paths and animate along path?)
 * cleaner with d3 svg.line.radial?
 * rename candidate to proper UI thing
+* kind of MVC framework for multiple pages as d3.datum() and sub selections (how to update data?)
+* debounce resize event if it proves annoying and eats CPU
+* if computing total_pause_elapsed is slowing render loop down cache as a single value and add most recent pause
 
 Bugs:
 
-* resuming starts from a different time (keep track of paused elapsed time too and subtract it? run separate timer when paused and switch back?)
-* mouseend when dragging over something outside the canvas?
-* debounce resize event if it proves annoying and eats CPU
+* mouseend when dragging over something outside the canvas? (mouseexit event when it leaves the svg?)

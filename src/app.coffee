@@ -18,7 +18,10 @@ redo = [] # stack of things to read if new circles or connections aren't drawn
 circle_candidate = null  # data about a circle candidate if dragged out
 
 speed = 100  # linear velocity of particles in orbits
-window.pause = false  # pause animation?
+dispatcher = d3.dispatch "pause", "unpause" # notify render loop to pause/unpause animation
+seconds = 0 # elapsed time
+paused = false # paused or not
+window.pauses = pauses = []  # lists of pause start and end global times
 
 # expose vars for debugging
 window.d3 = d3
@@ -162,7 +165,13 @@ Mousetrap.bind 'shift+mod+z', ->
 
 Mousetrap.bind 'space', (event) ->
   event.preventDefault() # don't scroll
-  window.pause = not window.pause
+
+  if paused
+    dispatcher.unpause seconds
+  else
+    dispatcher.pause seconds
+
+  paused = not paused
 
 
 ## Update/render loop
@@ -230,40 +239,47 @@ update = (t) ->
 
 ## Always be animating to provide feedback
 
+dispatcher.on "pause", (seconds) ->
+  console.log 'pause start'
+  pauses.push [seconds] # push pause start
 
-pause_start = null  # time of pause start
-pause_elapsed = 0
+  # start a timer to measure pause duration
+  d3.timer (pause_elapsed) ->
+    dispatcher.on "unpause", (seconds) ->
+      console.log 'pause end'
+      pauses[pauses.length-1].push seconds # add pause end
+
+    if paused
+      return false  # keep timing while still paused
+    else
+      return true
+
 
 d3.timer (elapsed) ->
+  # global space key handler depends on not modifying this
   seconds = (elapsed / 1000) # ms -> s
 
-  # grows while paused resulting in jump
-  # console.log 'pause time diff', seconds - pause_start
+  # figure out how much time was spent in pauses
+  # computing is linear in time with number of pauses
+  if pauses.length
+    total_pause_elapsed = pauses.map(
+        (pause_duration) ->
+          if pause_duration.length != 2 # ignore pauses that haven't ended
+            return 0
+          pause_duration[1] - pause_duration[0]
+      ).reduce((x, y) -> x + y)
+  else
+    total_pause_elapsed = 0
 
-  if window.pause and pause_start == null
-    console.log 'pause start!!'
-    pause_start = seconds - pause_elapsed
-
-  if window.pause and pause_start
-    # console.log 'still paused'
-    seconds = pause_start  # clobber seconds
-
-  if not window.pause and pause_start != null
-    console.log 'pause end!!'
-    pause_elapsed += (seconds - pause_start)
-    pause_start = null
-
-  if not window.pause and not pause_start
-    # console.log 'still running'
-    seconds -= pause_elapsed
-
-  update seconds
+  # depends on dispatcher completing before setting the global pause variable
+  # ignore time spent paused
+  if paused
+    pause_start = pauses[pauses.length-1][0] # linear with pauses
+    update pause_start - total_pause_elapsed
+  else
+    update seconds - total_pause_elapsed
 
   return false  # keep going
-
-
-d3.timer (pause_elapsed) ->
-
 
 
 update 0  # Run
