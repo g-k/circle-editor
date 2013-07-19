@@ -2,3 +2,4 @@ node_modules
 server.pid
 .#
 .tern-port
+app.js
