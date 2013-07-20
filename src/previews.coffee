@@ -15,8 +15,12 @@ measure_distance = (point1, point2) ->
 
 
 state =
-  brush: 'Orbit'  # default brush
+  brush: 'orbit'  # default brush
   preview: []
+
+
+# Fire save events with an orbit or line preview
+dispatcher = d3.dispatch "save"
 
 
 # Event handlers for different brushes
@@ -24,9 +28,9 @@ brushes =
   clear: ->
     state.preview.length = 0
 
-  Orbit:
+  orbit:
     mousedown: (x, y) ->
-      state.preview = [{x: x, y: y, r: 0}]
+      state.preview = [{type: state.brush, x: x, y: y, r: 0}]
 
     mousemove: (x, y) ->
       state.preview[0].r = measure_distance state.preview[0], {x: x, y: y}
@@ -37,6 +41,7 @@ brushes =
       state.preview[0].r = r or 1
 
       # save orbit
+      dispatcher.save state.preview[0]
 
       brushes.clear()
 
@@ -51,9 +56,9 @@ brushes =
           .attr('cx', (d) -> d.x)
           .attr('cy', (d) -> d.y)
 
-  Link:
+  link:
     mousedown: (x, y) ->
-      state.preview = [{x1: x, y1: y, x2: x, y2: y}]
+      state.preview = [{type: state.brush, x1: x, y1: y, x2: x, y2: y}]
 
     mousemove: (x, y) ->
       state.preview[0].x2 = x
@@ -64,6 +69,7 @@ brushes =
       state.preview[0].y2 = y
 
       # save link
+      dispatcher.save state.preview[0]
 
       brushes.clear()
 
@@ -80,6 +86,11 @@ brushes =
 
 
 bind = (brush_change_dispatcher, svg) ->
+  # Check for required html
+  # if svg.select('#line-brush').empty() or svg.select('.brush line').empty()
+  #   throw new Error "Missing line selectors."
+  # if svg.select('#circle-brush').empty() or svg.select('.brush circle').empty()
+  #   throw new Error "Missing circle selectors."
 
   # Update our brush when it changes and clear the current brush
   brush_change_dispatcher.on 'change_brush.preview', (new_brush_name) ->
@@ -87,6 +98,10 @@ bind = (brush_change_dispatcher, svg) ->
     brushes.clear()
 
   svg.on 'mousedown', ->
+    # Don't track right and middle clicks
+    if d3.event.which != 1
+      return
+
     [x, y] = d3.mouse this  # get position in svg
     brushes[state.brush]['mousedown'] x, y
 
@@ -104,9 +119,10 @@ bind = (brush_change_dispatcher, svg) ->
     [x, y] = d3.mouse this
     brushes[state.brush]['mouseup'] x, y
 
-  svg.on 'mouseout', ->
-    # abruptly kill the preview
-    brushes.clear()
+  # svg.on 'mouseout', ->
+  #   console.log 'mouseout' # triggered by going over another orbit
+  #   # use mouseup or abruptly kill the preview?
+  #   # brushes.clear()
 
   d3.timer ->
     if state.preview.length == 0
@@ -117,6 +133,7 @@ bind = (brush_change_dispatcher, svg) ->
     brushes[state.brush]['render'] svg, state.preview
     return false
 
+  return dispatcher
 
 module.exports =
   bind: bind

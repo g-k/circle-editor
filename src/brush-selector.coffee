@@ -11,10 +11,13 @@ Mousetrap = require './mousetrap.js'
 
 
 state = [
-    {name: 'Orbit', active: true}, # default to drawing orbits
-    {name: 'Link'}
+    {name: 'orbit', active: true}, # default to drawing orbits
+    {name: 'link'}
 ]
 
+# Fire change_brush events to draw the correct preview
+# sends the brush name
+dispatcher = d3.dispatch "change_brush"
 
 activate_button = (buttons, name) ->
   # Remove existing active button data
@@ -29,11 +32,6 @@ activate_button = (buttons, name) ->
   buttons.classed('pure-button-active', (d) -> d.active == true)
 
 
-# Fire change_brush events to draw the correct preview
-# sends the brush name
-dispatcher = d3.dispatch "change_brush"
-
-
 bind = (selector) ->
   buttons = d3.select(selector)
     .selectAll('a')
@@ -46,15 +44,13 @@ bind = (selector) ->
   buttons.on 'click', (button) ->
     dispatcher.change_brush button.name
 
-  Mousetrap.bind ['o', 'O'], ->
-    dispatcher.change_brush 'Orbit'
-
-  Mousetrap.bind ['l', 'L'], ->
-    dispatcher.change_brush 'Link'
-
   return dispatcher
 
 
 module.exports =
   bind: bind
-  state: state
+  select_orbit_brush: ->
+    dispatcher.change_brush 'orbit'
+  select_link_brush: ->
+    dispatcher.change_brush 'link'
+  _activate_button: activate_button
