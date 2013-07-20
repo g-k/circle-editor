@@ -6,7 +6,7 @@ BrushSelector = require './brush-selector.coffee'
 Previews = require './previews.coffee'
 Undo = require './undo.coffee'
 Pause = require './pause.coffee'
-
+PauseButton = require './pause-button.coffee'
 
 ## Keybindings
 
@@ -29,6 +29,7 @@ links = [] # links between orbit orbiters as indexes to orbits
 svg = SVG.init()
 
 brush_change_events = BrushSelector.bind '#brush-selector'
+PauseButton.bind '#pause-button', Pause.events, Pause.pause_resume
 save_events = Previews.bind brush_change_events, svg
 undo_events = Undo.init save_events
 

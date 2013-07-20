@@ -47,7 +47,7 @@ module.exports =
 
       return false  # keep going
 
-  pause_resume:  (event) ->
+  pause_resume: ->
     event.preventDefault()  # don't scroll
 
     if paused
@@ -56,3 +56,5 @@ module.exports =
       dispatcher.pause seconds
 
     paused = not paused
+
+  events: dispatcher
