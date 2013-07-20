@@ -28,7 +28,6 @@ TODO:
 * rename candidate to proper UI thing
 * kind of MVC framework for multiple pages as d3.datum() and sub selections (how to update data?)
 * debounce resize event if it proves annoying and eats CPU
-* if computing total_pause_elapsed is slowing render loop down cache as a single value and add most recent pause
 * <li><a>backspace or delete to remove item? (requires selection) should it trigger undo?
 
 Bugs:
@@ -41,3 +40,4 @@ Done:
 * show drag preview
 * kill current preview on brush change
 * resize svg on window resize
+* if computing total_pause_elapsed is slowing render loop down cache as a single value and add most recent pause
