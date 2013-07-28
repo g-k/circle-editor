@@ -7,16 +7,18 @@ http://beesandbombs.tumblr.com/post/48795316394/secrets-of-the-universe
 
 TODO:
 
-* snap links to nearest orbits
-* disable line brush when < 2 circles since no circles to connect
-* undo/redo pictures
+* snap links to nearest orbits (do orbiters so it's more direct manipulation)?
+  * what's the best data structure for dynamic 2D location lookup?
+  * or reuse browser events?
 * pick orbit velocity, direction, and relative phase
 * select links and orbits
 * delete links and orbits
+* disable undo/redo buttons when nothing to do
+* disable line brush when < 2 circles since no circles to connect
 
 * only link/unlink when paused with snapping? (link as separate layer? mori or oplog?)
 * save and reload? (serialize orbits and links and use data url?)
-* export to gif? interactive SVG?
+* export to gif or interactive SVG?
 * where to start the orbiter?
   * at a random angle around the circle?
   * show candidate there too?
@@ -36,8 +38,14 @@ Bugs:
   * when dragging a preview and mouseout then mouseup occurs off the screen preview should go away
 
 Done:
+
 * show drag preview
 * kill current preview on brush change
 * resize svg on window resize
 * if computing total_pause_elapsed is slowing render loop down cache as a single value and add most recent pause
 * pause/unpause buttons
+* undo/redo buttons
+
+Not doing:
+
+* undo/redo pictures?

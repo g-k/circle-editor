@@ -33,27 +33,46 @@
       .orbits circle.orbiter {
         fill: black;
       }
+      .pure-menu li a.just-text:hover {
+        background: #FFF;
+        pointer: none;
+      }
     </style>
   </head>
   <body>
-    <div id="brush-selector" class="control">
-      <a class="pure-button pure-button-active">
-	<span class="shortcut">O</span>rbit
-      </a>
-      <a class="pure-button">
-	<span class="shortcut">L</span>ink
-      </a>
-    </div>
     <div id="menu" class="pure-u control" >
       <div class="pure-menu pure-menu-open">
 	<div class="pure-menu-heading">
 	  Controls / Help
 	</div>
 	<ul>
-	  <li><a>click and drag to draw</a>
-	  <li><a id="pause-button" class="pure-button">pause</a>
-	  <li><a>ctrl+z to undo</a>
-	  <li><a>shift+ctrl+z to redo</a>
+	  <li><a class="just-text">click and drag to draw</a></li>
+	  <li>
+	    <a id="orbit-button" class="brush pure-button pure-button-active">
+	      <strong class="label">orbit</strong> (O)
+	    </a>
+	  </li>
+	  <li>
+	    <a id="link-button" class="brush pure-button">
+	      <strong class="label">link</strong> (L)
+	    </a>
+	  </li>
+
+	  <li>
+	    <a id="pause-button" class="pure-button">
+	      <strong class="label">pause</strong> (space)
+	    </a>
+	  </li>
+	  <li>
+	    <a id="undo-button" class="pure-button">
+	      <strong class="label">undo</strong> (ctrl+z)
+	    </a>
+	  </li>
+	  <li>
+	    <a id="redo-button" class="pure-button">
+	      <strong class="label">redo</strong> (shift+ctrl+z)
+	    </a>
+	  </li>
 	</ul>
       </div>
     </div>

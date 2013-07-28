@@ -10,6 +10,7 @@ d3 = require 'd3'
 module.exports =
   bind: (selector, pause_events, toggler) ->
     button = d3.select(selector)
+    label = button.select '.label'
 
     # highlight as active on hover
     button.on 'mouseover', ->
@@ -21,7 +22,7 @@ module.exports =
     button.on 'click', toggler
 
     pause_events.on 'pause.button', ->
-      button.text 'unpause'
+      label.text label.text().replace 'pause', 'unpause'
 
     pause_events.on 'unpause.button', ->
-      button.text 'pause'
+      label.text label.text().replace 'unpause', 'pause'

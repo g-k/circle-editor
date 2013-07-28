@@ -8,6 +8,24 @@ Undo = require './undo.coffee'
 Pause = require './pause.coffee'
 PauseButton = require './pause-button.coffee'
 
+
+cos = Math.cos
+sin = Math.sin
+
+orbits = []  # any orbits to draw go here
+links = [] # links between orbit orbiters as indexes to orbits
+orbiters = [] # for sharing, computed from orbits
+
+svg = SVG.init()
+
+brush_change_events = BrushSelector.bind '#menu'
+PauseButton.bind '#pause-button', Pause.events, Pause.pause_resume
+save_events = Previews.bind brush_change_events, svg, orbiters
+undo_events = Undo.init save_events
+
+d3.select('#undo-button').on 'click', Undo.undo
+d3.select('#redo-button').on 'click', Undo.redo
+
 ## Keybindings
 
 Mousetrap.bind ['o', 'O'], BrushSelector.select_orbit_brush
@@ -19,19 +37,6 @@ Mousetrap.bind 'shift+mod+z', Undo.redo
 
 Mousetrap.bind 'space', Pause.pause_resume
 
-
-cos = Math.cos
-sin = Math.sin
-
-orbits = []  # any orbits to draw go here
-links = [] # links between orbit orbiters as indexes to orbits
-
-svg = SVG.init()
-
-brush_change_events = BrushSelector.bind '#brush-selector'
-PauseButton.bind '#pause-button', Pause.events, Pause.pause_resume
-save_events = Previews.bind brush_change_events, svg
-undo_events = Undo.init save_events
 
 save_events.on 'save.main', (preview) ->
   console.log 'saving:', preview
@@ -92,15 +97,27 @@ update = (t) ->
 
   locate_orbiter = (orbit) ->
     # for a orbit return its orbiter location
-    # floor to make debugging easier
+    # floor to make a bit faster and debugging easier
     return [
       (orbit.x + cos(speed / orbit.r * t) * orbit.r) | 0,
       (orbit.y + sin(speed / orbit.r * t) * orbit.r) | 0
     ]
 
+  orbits_group
+    .selectAll('.orbiter')
+
+  # copy to orbiters in place to provide it to the link handler
+  new_orbiters = orbits.map locate_orbiter
+
+  args = [0, new_orbiters.length]
+  args.push.apply args, new_orbiters
+
+  orbiters.splice.apply orbiters, args
+
+
   orbit_line = (d) ->
-    locs = d.map locate_orbiter
-    return line locs
+    # gets locations for first and second orbiter
+    return line [orbiters[d[0]], orbiters[d[1]]]
 
   # draw a path from each orbiter back to beginning
   paths = links_group.selectAll('path')

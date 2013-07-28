@@ -14,6 +14,13 @@ measure_distance = (point1, point2) ->
   return pow(r2, 0.5) | 0  # rounded pixels should be faster - iD blog
 
 
+measure_distance_magnitude = (point1, point2) ->
+  # point to point distance without sqrt for comparisions
+  pow = Math.pow
+  r2 = pow(point1[0] - point2[0], 2) + pow(point1[1] - point2[1], 2)
+  return r2
+
+
 state =
   brush: 'orbit'  # default brush
   preview: []
@@ -21,6 +28,26 @@ state =
 
 # Fire save events with an orbit or line preview
 dispatcher = d3.dispatch "save"
+
+closest_point_from_array = (point, array) ->
+  # not including the point itself
+  # faster if sorted and bisect on closest
+  # but using order mapping back to orbits in main update
+  # console.log array
+  closest = null
+  closest_distance = +Infinity
+  for other_point in array
+    if point[0] == other_point[0] and point[1] == other_point[1]
+      continue
+    distance = measure_distance_magnitude point, other_point
+    if distance < closest_distance
+      closest = other_point
+      closest_distance = distance
+  return closest
+
+console.log closest_point_from_array [10, 10], []  # null
+console.log closest_point_from_array [10, 10], [[10, 10]]  # null
+console.log closest_point_from_array [10, 10], [[20, 10], [30, 10]]  # [20, 10]
 
 
 # Event handlers for different brushes
@@ -33,6 +60,9 @@ brushes =
       state.preview = [{type: state.brush, x: x, y: y, r: 0}]
 
     mousemove: (x, y) ->
+      if state.preview.length == 0
+        return
+
       state.preview[0].r = measure_distance state.preview[0], {x: x, y: y}
 
     mouseup: (x, y) ->
@@ -58,13 +88,24 @@ brushes =
 
   link:
     mousedown: (x, y) ->
+      # instead save the nearest orbiter (highlighted)
+      # and pause
       state.preview = [{type: state.brush, x1: x, y1: y, x2: x, y2: y}]
 
-    mousemove: (x, y) ->
+    mousemove: (x, y, orbiters) ->
+      # highlight the nearest orbiter
+      console.log 'os', orbiters.length
+      # !! need matching svg element so pass orbiters selection instead
+      console.log closest_point_from_array [x, y], orbiters
+
+      if state.preview.length == 0
+        return
+
       state.preview[0].x2 = x
       state.preview[0].y2 = y
 
     mouseup: (x, y) ->
+      # unpause
       state.preview[0].x2 = x
       state.preview[0].y2 = y
 
@@ -85,13 +126,7 @@ brushes =
           .attr('y2', (d) -> d.y2)
 
 
-bind = (brush_change_dispatcher, svg) ->
-  # Check for required html
-  # if svg.select('#line-brush').empty() or svg.select('.brush line').empty()
-  #   throw new Error "Missing line selectors."
-  # if svg.select('#circle-brush').empty() or svg.select('.brush circle').empty()
-  #   throw new Error "Missing circle selectors."
-
+bind = (brush_change_dispatcher, svg, orbiters) ->
   # Update our brush when it changes and clear the current brush
   brush_change_dispatcher.on 'change_brush.preview', (new_brush_name) ->
     state.brush = new_brush_name
@@ -106,11 +141,8 @@ bind = (brush_change_dispatcher, svg) ->
     brushes[state.brush]['mousedown'] x, y
 
   svg.on 'mousemove', ->
-    if state.preview.length == 0
-      return
-
     [x, y] = d3.mouse this
-    brushes[state.brush]['mousemove'] x, y
+    brushes[state.brush]['mousemove'] x, y, orbiters
 
   svg.on 'mouseup', ->
     if state.preview.length == 0

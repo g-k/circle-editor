@@ -34,7 +34,7 @@ activate_button = (buttons, name) ->
 
 bind = (selector) ->
   buttons = d3.select(selector)
-    .selectAll('a')
+    .selectAll('a.brush')
       .data(state)
 
   # Update the active button when the brush changes
