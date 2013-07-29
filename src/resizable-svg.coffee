@@ -8,7 +8,7 @@ init = ->
     .attr('height', window.innerHeight)
     .attr('width', window.innerWidth)
 # http://stackoverflow.com/questions/9400615/whats-the-best-way-to-make-a-d3-js-visualisation-layout-responsive
-    .attr('viewBox', "500 500 #{window.innerWidth} #{window.innerHeight}")
+    .attr('viewBox', "0 0 #{window.innerWidth} #{window.innerHeight}")
     .attr('preserveAspectRatio', 'xMinYMin')
 
   d3.select(window).on 'resize', ->

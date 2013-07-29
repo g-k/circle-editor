@@ -8,7 +8,7 @@ d3 = require 'd3'
 # assuming we start running/unpaused
 
 module.exports =
-  bind: (selector, pause_events, toggler) ->
+  bind: (selector, pause_events) ->
     button = d3.select(selector)
     label = button.select '.label'
 
@@ -19,10 +19,10 @@ module.exports =
     button.on 'mouseout', ->
       button.classed('pure-button-active', false)
 
-    button.on 'click', toggler
-
     pause_events.on 'pause.button', ->
       label.text label.text().replace 'pause', 'unpause'
 
     pause_events.on 'unpause.button', ->
       label.text label.text().replace 'unpause', 'pause'
+
+    return button

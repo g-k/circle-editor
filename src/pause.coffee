@@ -4,7 +4,7 @@ d3 = require 'd3'
 
 dispatcher = d3.dispatch "pause", "unpause" # notify render loop to pause/unpause animation
 seconds = 0 # elapsed time paused and unpaused
-paused = false # paused or not
+window.paused = paused = false # paused or not
 pauses = []  # lists of pause start and end global times
 total_pause_elapsed = 0
 pause_start = null

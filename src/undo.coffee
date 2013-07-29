@@ -13,7 +13,7 @@ module.exports =
       added.push item
       redo.length = 0  # can't redo after creating new stuff
 
-    return dispatcher
+  events: dispatcher
 
   undo: ->
     item = added.pop()

@@ -3,42 +3,56 @@ Mousetrap = require './mousetrap.js'
 
 SVG = require './resizable-svg.coffee'
 BrushSelector = require './brush-selector.coffee'
-Previews = require './previews.coffee'
+OrbitPreview = require './orbit-preview.coffee'
+LinkPreview = require './link-preview.coffee'
 Undo = require './undo.coffee'
 Pause = require './pause.coffee'
 PauseButton = require './pause-button.coffee'
 
 
-cos = Math.cos
-sin = Math.sin
-
 orbits = []  # any orbits to draw go here
 links = [] # links between orbit orbiters as indexes to orbits
-orbiters = [] # for sharing, computed from orbits
+
+brush_buttons = BrushSelector.bind '#menu'
+pause_button = PauseButton.bind '#pause-button', Pause.events
+
+main_events = d3.dispatch "time", "mouse_position", "save"
 
 svg = SVG.init()
 
-brush_change_events = BrushSelector.bind '#menu'
-PauseButton.bind '#pause-button', Pause.events, Pause.pause_resume
-save_events = Previews.bind brush_change_events, svg, orbiters
-undo_events = Undo.init save_events
+Undo.init main_events
 
-d3.select('#undo-button').on 'click', Undo.undo
-d3.select('#redo-button').on 'click', Undo.redo
+# click and drag to draw an orbit or link (modes)
+OrbitPreview.bind svg, BrushSelector.events, main_events
+LinkPreview.bind svg, BrushSelector.events, main_events
+
 
 ## Keybindings
 
 Mousetrap.bind ['o', 'O'], BrushSelector.select_orbit_brush
 Mousetrap.bind ['l', 'L'], BrushSelector.select_link_brush
 
-# undo with ctrl+z (or cmd+z for osx)
-Mousetrap.bind 'mod+z', Undo.undo
+Mousetrap.bind 'mod+z', Undo.undo  # undo with ctrl+z (or cmd+z for osx)
 Mousetrap.bind 'shift+mod+z', Undo.redo
 
 Mousetrap.bind 'space', Pause.pause_resume
 
+## Mousebinding
 
-save_events.on 'save.main', (preview) ->
+brush_buttons.on 'click', (button) ->
+  BrushSelector.events.change_brush button.name
+
+d3.select('#undo-button').on 'click', Undo.undo
+d3.select('#redo-button').on 'click', Undo.redo
+
+pause_button.on 'click', Pause.pause_resume
+
+## Event generation and routing
+
+svg.on 'mousemove.main', ->
+  main_events.mouse_position d3.mouse this
+
+main_events.on 'save.main', (preview) ->
   console.log 'saving:', preview
 
   if preview.type == 'orbit'
@@ -46,13 +60,13 @@ save_events.on 'save.main', (preview) ->
   else if preview.type == 'link'
     links.push preview
 
-undo_events.on "undo.main", (item) ->
+Undo.events.on "undo.main", (item) ->
   if item.type == 'orbit'
     orbits.pop()
   else if item.type == 'link'
     links.pop()
 
-undo_events.on "redo.main", (item) ->
+Undo.events.on "redo.main", (item) ->
   if item.type == 'orbit'
     orbits.push item
   else if item.type == 'link'
@@ -65,16 +79,34 @@ orbits_group = svg.select('.orbits')
 links_group = svg.select('.links')
 
 speed = 100  # linear velocity of particles in orbits
-
 line = d3.svg.line()
+  .x((d) -> d.x)
+  .y((d) -> d.y)
 
-# connect lines from orbits in order drawn (keep it simple)
+
 update = (t) ->
+  main_events.time t
+
+  cos = Math.cos
+  sin = Math.sin
+
+  orbits = orbits.map (d) ->
+    # add orbiter positions
+    d.orbiter = {
+      x: cos(speed / d.r * t) * d.r | 0
+      y: sin(speed / d.r * t) * d.r | 0
+    }
+    # absolute position
+    d.orbiter.absolute = {
+      x: d.x + d.orbiter.x
+      y: d.y + d.orbiter.y
+    }
+    return d
+
   selection = orbits_group.selectAll('g')
     .data(orbits)
 
-  selection.exit()
-    .remove()
+  selection.exit().remove()
 
   g = selection.enter()
         .append('g')
@@ -91,33 +123,13 @@ update = (t) ->
     .attr('cy', 0)
     .attr('r', 3)
 
-  selection.select('.orbiter')
-    .attr('cx', (d) -> cos(speed / d.r * t) * d.r )
-    .attr('cy', (d) -> sin(speed / d.r * t) * d.r )
-
-  locate_orbiter = (orbit) ->
-    # for a orbit return its orbiter location
-    # floor to make a bit faster and debugging easier
-    return [
-      (orbit.x + cos(speed / orbit.r * t) * orbit.r) | 0,
-      (orbit.y + sin(speed / orbit.r * t) * orbit.r) | 0
-    ]
-
-  orbits_group
-    .selectAll('.orbiter')
-
-  # copy to orbiters in place to provide it to the link handler
-  new_orbiters = orbits.map locate_orbiter
-
-  args = [0, new_orbiters.length]
-  args.push.apply args, new_orbiters
-
-  orbiters.splice.apply orbiters, args
-
+  orbiters = selection.select('.orbiter')
+    .attr('cx', (d) -> d.orbiter.x)
+    .attr('cy', (d) -> d.orbiter.y)
 
   orbit_line = (d) ->
     # gets locations for first and second orbiter
-    return line [orbiters[d[0]], orbiters[d[1]]]
+    return line [d.start.orbiter.absolute, d.end.orbiter.absolute]
 
   # draw a path from each orbiter back to beginning
   paths = links_group.selectAll('path')

@@ -7,30 +7,25 @@ http://beesandbombs.tumblr.com/post/48795316394/secrets-of-the-universe
 
 TODO:
 
-* snap links to nearest orbits (do orbiters so it's more direct manipulation)?
-  * what's the best data structure for dynamic 2D location lookup?
-  * or reuse browser events?
-* pick orbit velocity, direction, and relative phase
-* select links and orbits
-* delete links and orbits
 * disable undo/redo buttons when nothing to do
-* disable line brush when < 2 circles since no circles to connect
+* disable link brush when < 2 circles since no circles to connect
+* if esc pressed while previewing a change cancel preview
+* when saving link
+  * check start and end orbits are different
+  * check that link doesn't already exist
+* pause to draw links
 
-* only link/unlink when paused with snapping? (link as separate layer? mori or oplog?)
-* save and reload? (serialize orbits and links and use data url?)
+* pick orbit velocity, direction, and relative phase
+* save and load? (serialize orbits and links and use data url? external db or localstorage?)
 * export to gif or interactive SVG?
 * where to start the orbiter?
   * at a random angle around the circle?
   * show candidate there too?
   * from mouse dragend position?
-* multiple orbiters per circle (or draw two circles?)
-* allow arbitrary orbits (use svg paths and animate along path?)
 * cleaner orbits with d3 svg.line.radial?
 * rename preview to proper UI thing
-* kind of MVC framework for multiple pages as d3.datum() and sub selections (how to update data?)
 * debounce resize event if it proves annoying and eats CPU
-* <li><a>backspace or delete to remove item? (requires selection) should it trigger undo?
-* pause/unpause timeline?
+* improve closest orbiter to mouse lookup. quadtree? (stress test)
 
 Bugs:
 
@@ -39,6 +34,9 @@ Bugs:
 
 Done:
 
+* snap links to nearest orbits (do orbiters so it's more direct manipulation)?
+  * what's the best data structure for dynamic 2D location lookup?
+  * or reuse browser events?
 * show drag preview
 * kill current preview on brush change
 * resize svg on window resize
@@ -49,3 +47,12 @@ Done:
 Not doing:
 
 * undo/redo pictures?
+* pause/unpause timeline?
+* select links and orbits
+* delete links and orbits
+* <li><a>backspace or delete to remove item? (requires selection) should it trigger undo?
+* kind of MVC framework for multiple pages as d3.datum() and sub selections (how to update data?)
+* multiple orbiters per circle (or just draw two circles?)
+* allow arbitrary orbits (use svg paths and animate along path?)
+* links as separate layer?
+* mori or oplog to store more history?

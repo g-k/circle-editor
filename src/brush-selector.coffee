@@ -41,14 +41,12 @@ bind = (selector) ->
   dispatcher.on 'change_brush.activate', (brush_name) ->
     activate_button buttons, brush_name
 
-  buttons.on 'click', (button) ->
-    dispatcher.change_brush button.name
-
-  return dispatcher
+  return buttons
 
 
 module.exports =
   bind: bind
+  events: dispatcher
   select_orbit_brush: ->
     dispatcher.change_brush 'orbit'
   select_link_brush: ->
