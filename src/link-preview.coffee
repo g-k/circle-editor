@@ -139,3 +139,6 @@ bind = (svg, brush_change_events, main_events) ->
 
 module.exports =
   bind: bind
+  cancel: ->
+    console.log 'cancelling link preview'
+    preview = null

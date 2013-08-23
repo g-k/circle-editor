@@ -37,6 +37,9 @@ Mousetrap.bind 'shift+mod+z', Undo.redo
 
 Mousetrap.bind 'space', Pause.pause_resume
 
+
+Mousetrap.bind 'esc', LinkPreview.cancel
+
 ## Mousebinding
 
 brush_buttons.on 'click', (button) ->
