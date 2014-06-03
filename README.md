@@ -7,15 +7,23 @@ http://beesandbombs.tumblr.com/post/48795316394/secrets-of-the-universe
 
 TODO:
 
+* cancel link preview on mouseout (to hide red dot)
 * disable undo/redo buttons when nothing to do
 * disable link brush when < 2 circles since no circles to connect
-* if esc pressed while previewing a change cancel preview
+* if esc pressed while previewing a change cancel preview (links done, orbits todo)
 * when saving link
-  * check start and end orbits are different
   * check that link doesn't already exist
 * pause to draw links
+* draw whole boxes if enough points how to detect intermediate orbiters?
+  * pause during swipe?
+  * if continuing from last link end add to existing path?
+* hide pause/play?
+* find and fix memory leaks (run webkit memory profile)
+* fix slow frames
+* use page visibility API to pause it
 
 * pick orbit velocity, direction, and relative phase
+* lines from other lines (like unconed? lerp demo)
 * save and load? (serialize orbits and links and use data url? external db or localstorage?)
 * export to gif or interactive SVG?
 * where to start the orbiter?
@@ -34,6 +42,8 @@ Bugs:
 
 Done:
 
+* when saving link
+  * check start and end orbits are different
 * snap links to nearest orbits (do orbiters so it's more direct manipulation)?
   * what's the best data structure for dynamic 2D location lookup?
   * or reuse browser events?
