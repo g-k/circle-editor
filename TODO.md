@@ -27,6 +27,7 @@ TODO
  - [ ] rename preview to proper UI thing
  - [ ] debounce resize event if it proves annoying and eats CPU
  - [ ] improve closest orbiter to mouse lookup. quadtree? (stress test)
+ - [ ] mouse scroll wheel to change orbit frequency
 
 Bugs:
 
