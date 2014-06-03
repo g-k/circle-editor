@@ -39,16 +39,17 @@ Mousetrap.bind 'space', Pause.pause_resume
 
 
 Mousetrap.bind 'esc', LinkPreview.cancel
+Mousetrap.bind 'esc', OrbitPreview.cancel
 
 ## Mousebinding
 
-brush_buttons.on 'click', (button) ->
+brush_buttons.on 'click.main', (button) ->
   BrushSelector.events.change_brush button.name
 
-d3.select('#undo-button').on 'click', Undo.undo
-d3.select('#redo-button').on 'click', Undo.redo
+d3.select('#undo-button').on 'click.main', Undo.undo
+d3.select('#redo-button').on 'click.main', Undo.redo
 
-pause_button.on 'click', Pause.pause_resume
+pause_button.on 'click.main', Pause.pause_resume
 
 ## Event generation and routing
 
@@ -130,14 +131,15 @@ update = (t) ->
     .attr('cx', (d) -> d.orbiter.x)
     .attr('cy', (d) -> d.orbiter.y)
 
-  orbit_line = (d) ->
+  link_path = (d) ->
     # gets locations for first and second orbiter
+
     return line [d.start.orbiter.absolute, d.end.orbiter.absolute]
 
   # draw a path from each orbiter back to beginning
   paths = links_group.selectAll('path')
     .data(links)
-      .attr('d', orbit_line)
+      .attr('d', link_path)
 
   paths.enter()
     .append('path')

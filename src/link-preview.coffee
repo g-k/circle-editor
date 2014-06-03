@@ -8,11 +8,18 @@ measure_distance_magnitude = (point1, point2) ->
   r2 = pow(point1[0] - point2[0], 2) + pow(point1[1] - point2[1], 2)
   return r2
 
+same_location = (point1, point2) ->
+  # assumes rounded to integer for performance anyway
+  return point1.x == point2.x and point1.y == point2.y
+
+
 mouse_position = null
 time = null
 preview = null
 closest_orbiter = null
 current_brush = 'orbit'
+
+
 
 render = (svg, preview) ->
   if current_brush != 'link'
@@ -117,10 +124,14 @@ setup = (svg, main_events) ->
     preview.end = closest_orbiter.node().__data__
     console.log 'link end', preview
 
-    # save link
-    # TODO: check start and end orbits are different
-    # TODO: check that link doesn't already exist
-    main_events.save preview
+    # check start and end orbits are different
+    if same_location  preview.start, preview.end
+      console.log 'skipping same locations:', preview.start, preview.end
+    # else if
+    # TODO: check link already exist (counts as action or breaks undo/redo?)
+    else
+      # save link
+      main_events.save preview
     preview = null
 
 

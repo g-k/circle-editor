@@ -29,8 +29,15 @@ render = (svg, preview) ->
       .attr('cy', (d) -> d.y)
 
 
+current_brush = 'orbit'
+
+
 setup = (svg, main_events) ->
   preview = null
+
+  main_events.on 'time.orbit-preview', (new_time) ->
+    if current_brush == 'orbit'
+      render svg, preview
 
   # clear other preview handlers
   svg.on 'mousedown.preview', ->
@@ -73,6 +80,7 @@ bind = (svg, brush_change_events, main_events) ->
 
   # Update our brush when it changes and clear the current brush
   brush_change_events.on 'change_brush.orbit-preview', (new_brush_name) ->
+    current_brush = new_brush_name
     if new_brush_name != 'orbit'
       render svg, null
       return
@@ -84,3 +92,6 @@ bind = (svg, brush_change_events, main_events) ->
 
 module.exports =
   bind: bind
+  cancel: ->
+    console.log 'cancelling orbit preview'
+    preview = null
