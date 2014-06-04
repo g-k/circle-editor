@@ -3,3 +3,4 @@ server.pid
 .#
 .tern-port
 app.js
+.DS_Store
