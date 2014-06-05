@@ -8,6 +8,16 @@
 
 (om/root
   (fn [app owner]
-    (dom/h1 nil (:text app)))
+    (let [height (.-innerHeight js/window)
+          width (.-innerWidth js/window)
+          ]
+      (dom/div nil
+               (dom/svg #js {:height height
+                             :width width
+                             :viewBox (apply str (interpose " " [0 0 width height]))
+                             :preserveAspectRatio "xMinYMinb"
+                             })
+               ))
+    )
   app-state
   {:target (. js/document (getElementById "app"))})
