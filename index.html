@@ -25,14 +25,24 @@
         top: 0;
         left: 0;
       }
-      .orbits circle {
-        fill: none;
-        stroke: black;
+     .orbit-preview {
+        stroke: lightgray;
         stroke-width: 1;
-      }
-      .orbits circle.orbiter {
-        fill: black;
-      }
+     }
+     .orbit-preview.center {
+        fill: lightgray;
+     }
+     .orbit-preview.edge {
+        fill: none;
+     }
+     circle {
+       fill: none;
+       stroke: black;
+       stroke-width: 1;
+     }
+     circle.orbiter {
+       fill: black;
+     }
       .pure-menu li a.just-text:hover {
         background: #FFF;
         pointer: none;
