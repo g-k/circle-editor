@@ -1,5 +1,8 @@
 TODO
 
+Try using local state instead of app-state for animation
+
+
  - [ ] cancel link preview on mouseout (to hide red dot)
  - [ ] disable undo/redo buttons when nothing to do
  - [ ] disable link brush when < 2 circles since no circles to connect
